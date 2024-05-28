@@ -1,0 +1,71 @@
+import argparse
+from metadrive.component.sensors.rgb_camera import RGBCamera
+from metadrive import (
+    MultiAgentMetaDrive, MultiAgentTollgateEnv, MultiAgentBottleneckEnv, MultiAgentIntersectionEnv,
+    MultiAgentRoundaboutEnv, MultiAgentParkingLotEnv
+)
+from metadrive.constants import HELP_MESSAGE
+from metadrive.policy.idm_policy import ManualControllableIDMPolicy
+
+def parse_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--env", type=str, default="roundabout", choices=list(envs.keys()))
+    parser.add_argument("--top_down", "--topdown", action="store_true")
+    return parser.parse_args()
+
+def get_environment(env_cls_name, top_down):
+    extra_args = {"film_size": (800, 800)} if top_down else {}
+    env = envs[env_cls_name](
+        {
+            "use_render": not top_down,
+            "crash_done": False,
+            "sensors": {"rgb_camera": (RGBCamera, 400, 300)},
+            "interface_panel": ["rgb_camera", "dashboard"],
+            "agent_policy": ManualControllableIDMPolicy
+        }
+    )
+    return env, extra_args
+
+def run_simulation(env, extra_args, top_down):
+    try:
+        env.reset()
+        print(HELP_MESSAGE)
+        if not top_down:
+            env.switch_to_third_person_view()  # Default is Top-down view; switch to Third-person view.
+        
+        while True:
+            o, r, tm, tc, info = env.step({agent_id: [0, 0] for agent_id in env.agents.keys()})
+            render_args = {
+                "mode": "top_down" if top_down else None,
+                "text": {
+                    "Quit": "ESC",
+                    "Number of existing vehicles": len(env.agents),
+                    "Tracked agent (Press Q)": env.engine.agent_manager.object_to_agent(env.current_track_agent.id),
+                    "Keyboard Control": "W,A,S,D"
+                } if not top_down else {}
+            }
+            env.render(**extra_args, **render_args)
+            
+            if tm["__all__"]:
+                env.reset()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        env.close()
+
+if __name__ == "__main__":
+    envs = {
+        "roundabout": MultiAgentRoundaboutEnv,
+        "intersection": MultiAgentIntersectionEnv,
+        "tollgate": MultiAgentTollgateEnv,
+        "bottleneck": MultiAgentBottleneckEnv,
+        "parkinglot": MultiAgentParkingLotEnv,
+        "pgma": MultiAgentMetaDrive
+    }
+    
+    args = parse_arguments()
+    env_cls_name = args.env
+    assert env_cls_name in envs.keys(), "Invalid environment name. Valid options are: roundabout, intersection, tollgate, bottleneck, parkinglot, pgma"
+    
+    env, extra_args = get_environment(env_cls_name, args.top_down)
+    run_simulation(env, extra_args, args.top_down)
