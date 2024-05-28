@@ -1,0 +1,57 @@
+import argparse
+import logging
+import random
+
+import numpy as np
+
+from metadrive import MetaDriveEnv
+from metadrive.component.lane_planner import LaneChangePlanner, FollowingPlanner
+
+if __name__ == "__main__":
+    config = dict(
+        # Disable manual control and enable expert takeover
+        use_render=True,
+        manual_control=False,
+        traffic_density=0.1,
+        num_scenarios=10000,
+        # ... other configurations from previous example
+    )
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--target_speed", type=float, default=30.0, help="Target speed in km/h")
+    args = parser.parse_args()
+    config.update(dict(expert_takeover=True))
+
+    env = MetaDriveEnv(config)
+    try:
+        o, _ = env.reset(seed=21)
+        print("Using lane following behavior with target speed", args.target_speed, "km/h")
+
+        for i in range(1, 1000000000):
+            # Get current lane information
+            lane = env.ego_vehicle.lane
+
+            # Define planner based on lane position
+            if lane is None:
+                # No lane detected, fallback to basic following
+                planner = FollowingPlanner(env.ego_vehicle, target_speed=args.target_speed / 3.6)
+            elif env.ego_vehicle.on_center_lane:
+                # Stay on center lane
+                planner = FollowingPlanner(env.ego_vehicle, target_speed=args.target_speed / 3.6)
+            else:
+                # Follow lane with potential lane change
+                planner = LaneChangePlanner(env.ego_vehicle, target_lane=lane, target_speed=args.target_speed / 3.6)
+
+            # Get actions from planner
+            actions = planner.act()
+
+            # Step the environment with the actions
+            o, r, tm, tc, info = env.step(actions)
+            env.render()
+
+            # Print terminal information
+            if (tm or tc) and info["arrive_dest"]:
+                print("Reached destination. Resetting environment.")
+                env.reset(env.current_seed + 1)
+
+    finally:
+        env.close()
