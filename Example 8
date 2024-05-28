@@ -1,0 +1,65 @@
+import argparse
+from metadrive.component.lane_change_planner import LaneChangePlanner
+from metadrive.component.sensors.rgb_camera import RGBCamera
+from metadrive import (
+    MultiAgentRoundaboutEnv,
+    MultiAgentMetaDrive,
+)
+from metadrive.constants import HELP_MESSAGE
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--num_vehicles", type=int, default=5, help="Number of vehicles in the simulation")
+    parser.add_argument("--target_speed", type=float, default=30.0, help="Target speed in km/h")
+    parser.add_argument("--top_down", "--topdown", action="store_true")
+    args = parser.parse_args()
+
+    env = MultiAgentRoundaboutEnv(
+        {
+            "use_render": True if not args.top_down else False,
+            "weather": "clear",  # Optional: Set weather condition
+            "num_agents": args.num_vehicles,
+            "crash_done": False,
+            "sensors": dict(rgb_camera=(RGBCamera, 400, 300)),
+            "interface_panel": ["rgb_camera", "dashboard"],
+        }
+    )
+
+    try:
+        env.reset()
+
+        print(HELP_MESSAGE)
+        env.switch_to_third_person_view()  # Optional: Switch to third-person view
+
+        for i in range(1, 10000000000):
+            # Get actions for each vehicle based on lane information
+            actions = {}
+            for agent_id, agent in env.agents.items():
+                lane = agent.vehicle.lane
+                if lane is None:
+                    # No lane detected, keep straight
+                    actions[agent_id] = [0, 0]
+                else:
+                    # Follow lane with potential lane change for roundabout
+                    planner = LaneChangePlanner(agent.vehicle, target_lane=lane, target_speed=args.target_speed / 3.6)
+                    actions[agent_id] = planner.act()
+
+            # Step the environment with calculated actions
+            o, r, tm, tc, info = env.step(actions)
+            env.render(
+                film_size=(800, 800) if args.top_down else None,
+                mode="top_down" if args.top_down else None,
+                text={
+                    "Quit": "ESC",
+                    "Number of vehicles": len(env.agents),
+                    "Target Speed": f"{args.target_speed} km/h",
+                    "Top-Down View": "ON" if args.top_down else "OFF",
+                },
+            )
+
+            # Reset on terminal condition
+            if tm["__all__"]:
+                env.reset()
+
+    finally:
+        env.close()
