@@ -1,18 +1,4 @@
 %% Sensor Fusion Using Synthetic Radar and Vision Data
-% This example shows how to generate a scenario, simulate sensor
-% detections, and use sensor fusion to track simulated vehicles. The main
-% benefit of using scenario generation and sensor simulation over sensor
-% recording is the ability to create rare and potentially dangerous events
-% and test the vehicle algorithms with them.
-% 
-% This example covers the entire programmatic workflow for generating
-% synthetic data. To generate synthetic data interactively instead, use the
-% <docid:driving_ref#mw_07e6310f-b9c9-4f4c-b2f9-51e31d407766 Driving
-% Scenario Designer> app. For an example, see
-% <docid:driving_ug#mw_e49e404a-0301-4634-b5c2-c8a6da2db9f6 Generate
-% Synthetic Detections from an Interactive Driving Scenario>.
-%
-%   Copyright 2016-2020 The MathWorks, Inc.
 
 %% Generate the Scenario
 % Scenario generation comprises generating a road network, defining
@@ -43,24 +29,24 @@ barrier(scenario,mainRoad);
 % |trajectory| driving policy. The passing car will start on the right
 % lane, move to the left lane to pass, and return to the right lane.
 
-% Create the ego vehicle that travels at 25 m/s along the road.  Place the
+% Create the ego vehicle that travels at 30 m/s along the road.  Place the
 % vehicle on the right lane by subtracting off half a lane width (1.8 m)
 % from the centerline of the road.
 egoCar = vehicle(scenario, 'ClassID', 1);
-trajectory(egoCar, roadCenters(2:end,:) - [0 1.8], 25); % On right lane
+trajectory(egoCar, roadCenters(2:end,:) - [0 1.8], 30); % On right lane
 
 % Add a car in front of the ego vehicle
 leadCar = vehicle(scenario, 'ClassID', 1);
-trajectory(leadCar, [70 0; roadCenters(3:end,:)] - [0 1.8], 25); % On right lane
+trajectory(leadCar, [70 0; roadCenters(3:end,:)] - [0 1.8], 30); % On right lane
 
 % Add a car that travels at 35 m/s along the road and passes the ego vehicle
 passingCar = vehicle(scenario, 'ClassID', 1);
 waypoints = [0 -1.8; 50 1.8; 100 1.8; 250 21.8; 400 32.2; 500 38.2];
-trajectory(passingCar, waypoints, 35);
+trajectory(passingCar, waypoints, 40);
 
 % Add a car behind the ego vehicle
 chaseCar = vehicle(scenario, 'ClassID', 1);
-trajectory(chaseCar, [25 0; roadCenters(2:end,:)] - [0 1.8], 25); % On right lane
+trajectory(chaseCar, [25 0; roadCenters(2:end,:)] - [0 1.8], 27); % On right lane
 
 %% Define Radar and Vision Sensors
 % In this example, you simulate an ego vehicle that has 6 radar sensors and
