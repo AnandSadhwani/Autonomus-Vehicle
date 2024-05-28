@@ -1,9 +1,6 @@
 %% Sensor Fusion Using Synthetic Radar and Vision Data
 % This example shows how to generate a scenario, simulate sensor
-% detections, and use sensor fusion to track simulated vehicles. The main
-% benefit of using scenario generation and sensor simulation over sensor
-% recording is the ability to create rare and potentially dangerous events
-% and test the vehicle algorithms with them.
+% detections, and use sensor fusion to track simulated vehicles. 
 % 
 % This example covers the entire programmatic workflow for generating
 % synthetic data. To generate synthetic data interactively instead, use the
