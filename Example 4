@@ -1,0 +1,36 @@
+import logging
+from metadrive.constants import HELP_MESSAGE
+from metadrive.tests.test_functionality.test_object_collision_detection import ComplexEnv
+
+def setup_environment():
+    return ComplexEnv(dict(use_render=True, manual_control=True, vehicle_config={"show_navi_mark": False}))
+
+def run_simulation(env):
+    try:
+        env.reset()
+        print(HELP_MESSAGE)
+        env.agent.expert_takeover = True
+        
+        while True:
+            previous_takeover = env.current_track_agent.expert_takeover
+            o, r, tm, tc, info = env.step([0, 0])
+            env.render(
+                text={
+                    "Auto-Drive (Switch mode: T)": "on" if env.current_track_agent.expert_takeover else "off",
+                    "Total episode cost": env.episode_cost,
+                    "Keyboard Control": "W,A,S,D",
+                }
+            )
+            if not previous_takeover and env.current_track_agent.expert_takeover:
+                logging.warning("Auto-Drive mode may fail to solve some scenarios due to distribution mismatch")
+            if (tm or tc) and info["arrive_dest"]:
+                env.reset()
+                env.current_track_agent.expert_takeover = True
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
+    finally:
+        env.close()
+
+if __name__ == "__main__":
+    env = setup_environment()
+    run_simulation(env)
