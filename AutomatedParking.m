@@ -27,17 +27,14 @@
 % road rules and infer drivable regions, recognition of obstacles, and detection 
 % of available parking spots.
 % 
-% As the vehicle sensors perceive the world, the vehicle must plan a path through 
-% the environment towards a free parking spot and execute a sequence of control 
-% actions needed to drive to it. While doing so, it must respond to dynamic changes 
-% in the environment, such as pedestrians crossing its path, and readjust its 
-% plan.
+
 % 
 % This example implements a subset of features required to implement such a 
 % system. It focuses on planning a feasible path through the environment, and 
 % executing the actions needed to traverse the path. Map creation and dynamic 
 % obstacle avoidance are excluded from this example.
 %% Environment Model
+
 % The environment model represents a map of the environment. For a parking valet 
 % system, this map includes available and occupied parking spots, road markings, 
 % and obstacles such as pedestrians or other vehicles. Occupancy maps are a common 
@@ -59,9 +56,6 @@
 % * Parked cars: This layer contains information about which parking spots are 
 % already occupied.
 %% 
-% Each map layer contains different kinds of obstacles that represent different 
-% levels of danger for a car navigating through it. With this structure, each 
-% layer can be handled, updated, and maintained independently.
 % 
 % Load and display the three map layers. In each layer, dark cells represent 
 % occupied cells, and light cells represent free cells.
